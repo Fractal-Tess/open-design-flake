@@ -2,7 +2,12 @@
 # The upstream repository is a source pin for the package only; this module
 # intentionally does not import any upstream Nix files.
 { flake }:
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.services.open-design;
   common = import ./common.nix {
@@ -27,7 +32,8 @@ let
       "/bin"
     ];
 
-  isLoopbackHost = host:
+  isLoopbackHost =
+    host:
     host == "127.0.0.1"
     || host == "localhost"
     || host == "::1"
@@ -45,11 +51,16 @@ let
   // lib.optionalAttrs (cfg.webFrontend.allowedOrigins != [ ]) {
     OD_ALLOWED_ORIGINS = lib.concatStringsSep "," cfg.webFrontend.allowedOrigins;
   }
-  // cfg.extraEnv;
+  // cfg.environment;
 
   envToList = lib.mapAttrsToList (name: value: "${name}=${value}") daemonEnvironment;
   mcpEndpoint = "http://${cfg.mcp.host}:${toString cfg.mcp.port}/mcp";
-  mcpDaemonArgs = [ "mcp" "--daemon-url" "http://127.0.0.1:${toString cfg.port}" ] ++ cfg.mcp.daemonArgs;
+  mcpDaemonArgs = [
+    "mcp"
+    "--daemon-url"
+    "http://127.0.0.1:${toString cfg.port}"
+  ]
+  ++ cfg.mcp.daemonArgs;
 
   caddyfile = pkgs.writeText "open-design-web.Caddyfile" ''
     {
@@ -198,127 +209,146 @@ in
 {
   options.services.open-design = common;
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    {
-      home.packages = [ cfg.package ] ++ lib.optional cfg.mcp.enable cfg.mcp.package;
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        home.packages = [ cfg.package ] ++ lib.optional cfg.mcp.enable cfg.mcp.package;
 
-      home.activation.openDesignDataDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run mkdir -p ${lib.escapeShellArg (toString cfg.dataDir)}
-      '';
+        home.activation.openDesignDataDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          run mkdir -p ${lib.escapeShellArg (toString cfg.dataDir)}
+        '';
 
-      assertions = [
-        {
-          assertion =
-            !cfg.webFrontend.enable
-            || isLoopbackHost cfg.webFrontend.host
-            || cfg.webFrontend.allowedOrigins != [ ];
-          message = ''
-            services.open-design.webFrontend.host = "${cfg.webFrontend.host}" is
-            non-loopback, but webFrontend.allowedOrigins is empty. Declare every
-            external origin used to load the SPA, or keep the frontend on loopback.
-          '';
-        }
-        {
-          assertion = pkgs.stdenv.hostPlatform.isLinux;
-          message = "services.open-design is supported only on Linux.";
-        }
-      ];
-    }
+        assertions = [
+          {
+            assertion =
+              !cfg.webFrontend.enable
+              || isLoopbackHost cfg.webFrontend.host
+              || cfg.webFrontend.allowedOrigins != [ ];
+            message = ''
+              services.open-design.webFrontend.host = "${cfg.webFrontend.host}" is
+              non-loopback, but webFrontend.allowedOrigins is empty. Declare every
+              external origin used to load the SPA, or keep the frontend on loopback.
+            '';
+          }
+          {
+            assertion = pkgs.stdenv.hostPlatform.isLinux;
+            message = "services.open-design is supported only on Linux.";
+          }
+        ];
+      }
 
-    (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.autoStart) {
-      systemd.user.services.open-design = {
-        Unit = {
-          Description = "Open Design daemon (user service)";
-          After = [ "network-online.target" ];
-          Wants = [ "network-online.target" ]
+      (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux) {
+        systemd.user.services.open-design = {
+          Unit = {
+            Description = "Open Design daemon (user service)";
+            After = [ "network-online.target" ];
+            Wants = [
+              "network-online.target"
+            ]
+            ++ lib.optional cfg.webFrontend.enable "open-design-web.service"
             ++ lib.optional cfg.mcp.enable "open-design-mcp.service"
             ++ lib.optional (cfg.mcp.enable && cfg.mcp.keepalive.enable) "open-design-mcp-keepalive.timer";
+          };
+          Service = {
+            Type = "simple";
+            ExecStart = "${daemonExe} --port ${toString cfg.port} --no-open";
+            Environment = envToList;
+            Restart = "on-failure";
+            RestartSec = 3;
+          }
+          // lib.optionalAttrs (cfg.environmentFile != null) {
+            EnvironmentFile = toString cfg.environmentFile;
+          };
+        }
+        // lib.optionalAttrs cfg.autoStart {
+          Install.WantedBy = [ "default.target" ];
         };
-        Install.WantedBy = [ "default.target" ];
-        Service = {
-          Type = "simple";
-          ExecStart = "${daemonExe} --port ${toString cfg.port} --no-open";
-          Environment = envToList;
-          Restart = "on-failure";
-          RestartSec = 3;
-        } // lib.optionalAttrs (cfg.environmentFile != null) {
-          EnvironmentFile = toString cfg.environmentFile;
-        };
-      };
-    })
+      })
 
-    (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.autoStart && cfg.webFrontend.enable) {
-      systemd.user.services.open-design-web = {
-        Unit = {
-          Description = "Open Design web frontend (static file server)";
-          After = [ "network-online.target" ];
-          Wants = [ "network-online.target" ];
+      (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.webFrontend.enable) {
+        systemd.user.services.open-design-web = {
+          Unit = {
+            Description = "Open Design web frontend (static file server)";
+            After = [ "network-online.target" ];
+            Wants = [ "network-online.target" ];
+          };
+          Service = {
+            Type = "simple";
+            ExecStart = "${caddyExe} run --config ${caddyfile} --adapter caddyfile";
+            Restart = "on-failure";
+            RestartSec = 3;
+          };
+        }
+        // lib.optionalAttrs cfg.autoStart {
+          Install.WantedBy = [ "default.target" ];
         };
-        Install.WantedBy = [ "default.target" ];
-        Service = {
-          Type = "simple";
-          ExecStart = "${caddyExe} run --config ${caddyfile} --adapter caddyfile";
-          Restart = "on-failure";
-          RestartSec = 3;
-        };
-      };
-    })
+      })
 
-    (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.autoStart && cfg.mcp.enable) {
-      systemd.user.services.open-design-mcp = {
-        Unit = {
-          Description = "Open Design Streamable HTTP MCP proxy";
-          After = [ "network-online.target" "open-design.service" ];
-          Wants = [ "network-online.target" ];
-          Requires = [ "open-design.service" ];
-          BindsTo = [ "open-design.service" ];
-          PartOf = [ "open-design.service" ];
-          StartLimitIntervalSec = 0;
+      (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.mcp.enable) {
+        systemd.user.services.open-design-mcp = {
+          Unit = {
+            Description = "Open Design Streamable HTTP MCP proxy";
+            After = [
+              "network-online.target"
+              "open-design.service"
+            ];
+            Wants = [ "network-online.target" ];
+            Requires = [ "open-design.service" ];
+            BindsTo = [ "open-design.service" ];
+            PartOf = [ "open-design.service" ];
+            StartLimitIntervalSec = 0;
+          };
+          Service = {
+            Type = "simple";
+            Environment = envToList;
+            ExecStart = mcpProxySupervisor;
+            Restart = "always";
+            RestartSec = 3;
+          }
+          // lib.optionalAttrs (cfg.environmentFile != null) {
+            EnvironmentFile = toString cfg.environmentFile;
+          };
+        }
+        // lib.optionalAttrs cfg.autoStart {
+          Install.WantedBy = [ "default.target" ];
         };
-        Service = {
-          Type = "simple";
-          Environment = envToList;
-          ExecStart = mcpProxySupervisor;
-          Restart = "always";
-          RestartSec = 3;
-        } // lib.optionalAttrs (cfg.environmentFile != null) {
-          EnvironmentFile = toString cfg.environmentFile;
-        };
-        Install.WantedBy = [ "default.target" ];
-      };
-    })
+      })
 
-    (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.autoStart && cfg.mcp.enable && cfg.mcp.keepalive.enable) {
-      systemd.user.services.open-design-mcp-keepalive = {
-        Unit = {
-          Description = "Open Design MCP keepalive and health check";
-          After = [ "open-design-mcp.service" ];
-          Requires = [ "open-design-mcp.service" ];
-          BindsTo = [ "open-design.service" ];
-          PartOf = [ "open-design.service" ];
+      (lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.mcp.enable && cfg.mcp.keepalive.enable) {
+        systemd.user.services.open-design-mcp-keepalive = {
+          Unit = {
+            Description = "Open Design MCP keepalive and health check";
+            After = [ "open-design-mcp.service" ];
+            Requires = [ "open-design-mcp.service" ];
+            BindsTo = [ "open-design.service" ];
+            PartOf = [ "open-design.service" ];
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = mcpKeepalive;
+          };
         };
-        Service = {
-          Type = "oneshot";
-          ExecStart = mcpKeepalive;
-        };
-      };
 
-      systemd.user.timers.open-design-mcp-keepalive = {
-        Unit = {
-          Description = "Periodically keep Open Design MCP alive";
-          After = [ "open-design.service" ];
-          Requires = [ "open-design.service" ];
-          BindsTo = [ "open-design.service" ];
-          PartOf = [ "open-design.service" ];
+        systemd.user.timers.open-design-mcp-keepalive = {
+          Unit = {
+            Description = "Periodically keep Open Design MCP alive";
+            After = [ "open-design.service" ];
+            Requires = [ "open-design.service" ];
+            BindsTo = [ "open-design.service" ];
+            PartOf = [ "open-design.service" ];
+          };
+          Timer = {
+            OnBootSec = cfg.mcp.keepalive.onBootSec;
+            OnUnitActiveSec = cfg.mcp.keepalive.onUnitActiveSec;
+            AccuracySec = cfg.mcp.keepalive.accuracySec;
+            Unit = "open-design-mcp-keepalive.service";
+          };
+        }
+        // lib.optionalAttrs cfg.autoStart {
+          Install.WantedBy = [ "timers.target" ];
         };
-        Timer = {
-          OnBootSec = cfg.mcp.keepalive.onBootSec;
-          OnUnitActiveSec = cfg.mcp.keepalive.onUnitActiveSec;
-          AccuracySec = cfg.mcp.keepalive.accuracySec;
-          Unit = "open-design-mcp-keepalive.service";
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
-    })
-  ]);
+      })
+
+    ]
+  );
 }

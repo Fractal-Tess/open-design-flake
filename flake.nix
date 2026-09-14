@@ -9,21 +9,32 @@
     };
   };
 
-  outputs = { self, nixpkgs, source }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      source,
+    }:
     let
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
       lib = nixpkgs.lib;
       sourceMeta = lib.importJSON "${source}/package.json";
 
-      filterSource = includePaths:
+      filterSource =
+        includePaths:
         lib.cleanSourceWith {
           src = source;
-          filter = path: type:
+          filter =
+            path: type:
             let
               root = toString source;
               pathString = toString path;
               relative = lib.removePrefix (root + "/") pathString;
-              matches = includePath:
+              matches =
+                includePath:
                 relative == includePath
                 || lib.hasPrefix (includePath + "/") relative
                 || (type == "directory" && lib.hasPrefix (relative + "/") includePath);
@@ -31,8 +42,8 @@
             relative == "" || builtins.any matches includePaths;
         };
 
-      workspaceManifests = workspacePaths:
-        map (workspacePath: "${workspacePath}/package.json") workspacePaths;
+      workspaceManifests =
+        workspacePaths: map (workspacePath: "${workspacePath}/package.json") workspacePaths;
 
       daemonWorkspacePaths = [
         "packages/release"
@@ -67,21 +78,26 @@
         "tsconfig.json"
       ];
 
-      daemonSrc = filterSource ([
-        "assets"
-        "plugins"
-        "skills"
-        "design-systems"
-        "design-templates"
-        "craft"
-        "prompt-templates"
-      ] ++ daemonWorkspacePaths ++ baseSourcePaths);
+      daemonSrc = filterSource (
+        [
+          "assets"
+          "plugins"
+          "skills"
+          "design-systems"
+          "design-templates"
+          "craft"
+          "prompt-templates"
+        ]
+        ++ daemonWorkspacePaths
+        ++ baseSourcePaths
+      );
 
       webSrc = filterSource (webWorkspacePaths ++ baseSourcePaths);
       daemonPnpmDepsSrc = filterSource (baseSourcePaths ++ workspaceManifests daemonWorkspacePaths);
       webPnpmDepsSrc = filterSource (baseSourcePaths ++ workspaceManifests webWorkspacePaths);
 
-      perSystem = lib.genAttrs systems (system:
+      perSystem = lib.genAttrs systems (
+        system:
         let
           pkgs = import nixpkgs { inherit system; };
           nodeMajor = builtins.head (lib.splitString "." (lib.removePrefix "~" sourceMeta.engines.node));
@@ -92,18 +108,20 @@
             nodejs-slim = (builtins.getAttr "nodejs-slim_${nodeMajor}" pkgs).overrideAttrs (old: {
               # Node 24's ObjectWrap backport requires both fixes together.
               # Remove these once the pinned Node includes nodejs/node#65943.
-              patches = (old.patches or [ ]) ++ lib.optionals (nodeMajor == "24") [
-                (pkgs.fetchpatch2 {
-                  name = "node24-cleanup-hook-registry.patch";
-                  url = "https://github.com/nodejs/node/commit/0ceae18f6314c9327993d5dfb429b412a8b21340.patch";
-                  hash = "sha256-M13k1kHMFI8bLU//i/c7nEMbSUvwMyXF1ktiKcoPDuI=";
-                })
-                (pkgs.fetchpatch2 {
-                  name = "node24-cleanup-hook-lifetime.patch";
-                  url = "https://github.com/nodejs/node/commit/fa73926c5f6185eeb1293226f4597f49ee15b42c.patch";
-                  hash = "sha256-fsfGtYFIM89IYlvJDePrjWzwqe1+nO6oAcxgUdRfGXw=";
-                })
-              ];
+              patches =
+                (old.patches or [ ])
+                ++ lib.optionals (nodeMajor == "24") [
+                  (pkgs.fetchpatch2 {
+                    name = "node24-cleanup-hook-registry.patch";
+                    url = "https://github.com/nodejs/node/commit/0ceae18f6314c9327993d5dfb429b412a8b21340.patch";
+                    hash = "sha256-M13k1kHMFI8bLU//i/c7nEMbSUvwMyXF1ktiKcoPDuI=";
+                  })
+                  (pkgs.fetchpatch2 {
+                    name = "node24-cleanup-hook-lifetime.patch";
+                    url = "https://github.com/nodejs/node/commit/fa73926c5f6185eeb1293226f4597f49ee15b42c.patch";
+                    hash = "sha256-fsfGtYFIM89IYlvJDePrjWzwqe1+nO6oAcxgUdRfGXw=";
+                  })
+                ];
             });
           };
           pnpmBase = builtins.getAttr "pnpm_${pnpmMajor}" pkgs;
@@ -130,6 +148,7 @@
         {
           packages = {
             inherit daemon web;
+            open-design = daemon;
             default = daemon;
           };
 
@@ -147,7 +166,10 @@
           };
 
           devShells.default = pkgs.mkShell {
-            packages = [ nodejs pnpm_10 ];
+            packages = [
+              nodejs
+              pnpm_10
+            ];
             shellHook = ''
               echo "Open Design dev shell"
               echo "Node.js: $(node --version)"
@@ -156,10 +178,12 @@
           };
 
           formatter = pkgs.nixpkgs-fmt;
-        });
+        }
+      );
     in
-    (lib.genAttrs [ "packages" "checks" "apps" "devShells" "formatter" ]
-      (output: lib.genAttrs systems (system: perSystem.${system}.${output})))
+    (lib.genAttrs [ "packages" "checks" "apps" "devShells" "formatter" ] (
+      output: lib.genAttrs systems (system: perSystem.${system}.${output})
+    ))
     // {
       homeManagerModules.default = import ./modules/home-manager.nix { flake = self; };
       nixosModules.default = import ./modules/nixos.nix { flake = self; };

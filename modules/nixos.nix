@@ -1,63 +1,39 @@
-# Thin NixOS integration for the standalone Home Manager service module.
+# NixOS integration for the standalone Home Manager service module.
 # This module intentionally does not import Home Manager itself. Consumers
-# provide Home Manager's NixOS module; this wrapper imports the owned Open
+# must provide Home Manager's NixOS module; this wrapper imports the owned Open
 # Design Home Manager module into the selected user's configuration.
 { flake }:
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.services.open-design;
+  common = import ./common.nix {
+    inherit lib pkgs flake;
+    defaultDataDir =
+      if cfg.user != null && builtins.hasAttr cfg.user config.users.users then
+        "${config.users.users.${cfg.user}.home}/.od"
+      else
+        "/var/empty";
+  };
 in
 {
-  options.services.open-design = {
-    enable = lib.mkEnableOption "Open Design through Home Manager";
-
+  options.services.open-design = common // {
     user = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = ''
         Existing local user whose Home Manager configuration receives the
-        Open Design module settings. This wrapper never creates or modifies a
-        user; the named user must already be managed by Home Manager. Set this
+        Open Design options. This wrapper never creates or modifies a user;
+        the named user must already be managed by Home Manager. Set this
         explicitly when enable is true.
       '';
     };
-
-    settings = lib.mkOption {
-      type = lib.types.attrsOf lib.types.anything;
-      default = { };
-      example = lib.literalExpression ''
-        {
-          autoStart = true;
-          dataDir = "/home/alice/.od";
-          webFrontend = {
-            enable = true;
-            host = "127.0.0.1";
-            port = 5174;
-          };
-          mcp = {
-            enable = true;
-            port = 7458;
-            keepalive.enable = true;
-          };
-        }
-      '';
-      description = ''
-        Attribute set forwarded to
-        `home-manager.users.<user>.services.open-design`. These are the
-        Home Manager service options: autoStart, package, port, dataDir,
-        environmentFile, extraEnv, extraBinPaths, webFrontend, and mcp.
-        `services.open-design.enable` here is authoritative and is merged
-        after this set, so the wrapper can disable the service without
-        rewriting settings. Secret values belong in the runtime
-        environmentFile, not in this Nix configuration.
-
-        The consuming system must provide Home Manager's NixOS module and
-        manage the named user through it. This wrapper imports the owned Open
-        Design Home Manager module into that user's configuration; no
-        upstream module or separate Home Manager import is needed.
-      '';
-    };
   };
+
   config = lib.mkMerge [
     {
       assertions = [
@@ -67,15 +43,15 @@ in
         }
         {
           assertion = !cfg.enable || (cfg.user != null && builtins.hasAttr cfg.user config.users.users);
-          message = "services.open-design.user must refer to an existing NixOS user.";
+          message = "services.open-design.user must refer to an existing NixOS user managed by Home Manager.";
         }
       ];
     }
     (lib.mkIf (cfg.user != null && cfg.user != "") {
-      home-manager.users.${if cfg.user == null then "root" else cfg.user} = {
+      home-manager.users.${cfg.user} = {
         imports = [ (import ./home-manager.nix { inherit flake; }) ];
         services.open-design = lib.mkMerge [
-          cfg.settings
+          (lib.removeAttrs cfg [ "user" ])
           { enable = lib.mkForce cfg.enable; }
         ];
       };

@@ -1,21 +1,24 @@
 # Shared option definitions for the standalone Open Design modules.
 # This file contains no service configuration and deliberately has no import
 # from the upstream repository.
-{ lib, pkgs, flake, defaultDataDir }:
+{
+  lib,
+  pkgs,
+  flake,
+  defaultDataDir,
+}:
 let
   system = pkgs.stdenv.hostPlatform.system;
-  packagesForSystem =
-    if flake ? packages.${system}
-    then flake.packages.${system}
-    else { };
+  packagesForSystem = if flake ? packages.${system} then flake.packages.${system} else { };
 in
 {
   enable = lib.mkEnableOption "the Open Design local-first design daemon";
 
   package = lib.mkOption {
     type = lib.types.package;
-    default = packagesForSystem.daemon or (throw
-      "open-design: no daemon package available for ${system}; set services.open-design.package explicitly");
+    default =
+      packagesForSystem.daemon
+        or (throw "open-design: no daemon package available for ${system}; set services.open-design.package explicitly");
     defaultText = lib.literalExpression "open-design.packages.\${pkgs.stdenv.hostPlatform.system}.daemon";
     description = "Package providing the Open Design `od` executable.";
   };
@@ -41,11 +44,13 @@ in
 
   autoStart = lib.mkOption {
     type = lib.types.bool;
-    default = false;
+    default = true;
     description = ''
       Register the Open Design user service(s) with systemd so they start
-      automatically. When false, no daemon, web, MCP, or keepalive units are
-      declared; the package and data-directory activation remain available.
+      automatically. When false, daemon, web, MCP, and keepalive units are
+      still declared for manual use, but no unit is linked into a startup
+      target. Starting the daemon manually still starts enabled companion
+      services.
     '';
   };
 
@@ -61,7 +66,7 @@ in
     '';
   };
 
-  extraEnv = lib.mkOption {
+  environment = lib.mkOption {
     type = lib.types.attrsOf lib.types.str;
     default = { };
     example = lib.literalExpression ''{ OD_CODEX_DISABLE_PLUGINS = "1"; }'';
@@ -88,8 +93,8 @@ in
       default = false;
       description = ''
         Serve the built static SPA with Caddy and proxy its API, artifacts,
-        and frames paths to the daemon. The web service is registered only
-        when both this option and autoStart are true.
+        and frames paths to the daemon. The web service is registered when
+        this option is true; autoStart controls only its startup edge.
       '';
     };
 
@@ -123,8 +128,9 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = packagesForSystem.web or (throw
-        "open-design: no web package available for ${system}; set services.open-design.webFrontend.package explicitly");
+      default =
+        packagesForSystem.web
+          or (throw "open-design: no web package available for ${system}; set services.open-design.webFrontend.package explicitly");
       defaultText = lib.literalExpression "open-design.packages.\${pkgs.stdenv.hostPlatform.system}.web";
       description = "Built static Open Design frontend to serve.";
     };
@@ -136,8 +142,8 @@ in
       default = false;
       description = ''
         Run the daemon's stdio MCP server behind a local Streamable HTTP
-        proxy. The MCP supervisor is registered only when this, enable, and
-        autoStart are true.
+        proxy. The MCP supervisor is registered when this option is true;
+        autoStart controls only its startup edge.
       '';
     };
 
