@@ -94,7 +94,9 @@ Use `nix develop` for the Node and pnpm versions selected by the source metadata
 
 ## Verification
 
-Verified on x86_64-linux: daemon and web source builds, `nix flake check`, Home Manager and NixOS module evaluation, and an isolated runtime smoke run. The smoke run created a project through Caddy, displayed it in Chromium, listed it through MCP, and retained it after a daemon restart. Disabled configurations declare no Open Design services or timers.
+Verified on x86_64-linux: daemon and web source builds, `nix flake check`, Home Manager and NixOS module evaluation, native SQLite queries and PTY processes, and a live NixOS deployment. Project creation, listing, deletion, and restart persistence passed through Caddy. MCP initialization, tool discovery, project listing, and restart recovery passed. Chromium rendered the web frontend and local-agent onboarding. Disabled configurations declare no Open Design services or timers.
+
+AI generation is not covered by these checks. Onboarding requires valid provider credentials; an installed CLI or cached login alone does not establish that its credentials still work.
 
 aarch64-linux outputs have been evaluated, not built or run on ARM hardware.
 
