@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="640" height="240" viewBox="0 0 640 240" role="img" aria-labelledby="title desc">
+  <title id="title">Open Design + Nix</title>
+  <desc id="desc">The Open Design app mark and the blue Nix snowflake, separated by a plus sign on a transparent background.</desc>
+  <!-- Open Design mark: nexu-io/open-design, Apache-2.0. -->
+  <svg x="56" y="40" width="160" height="160" viewBox="0 0 256 256" fill="none">
+    <rect width="256" height="256" rx="80" fill="#202020"/>
+    <path d="M128 41.5103C175.765 41.5103 214.486 80.2314 214.486 127.997C214.486 175.762 175.765 214.483 128 214.483H53.0203C46.6517 214.483 41.5136 209.347 41.5134 202.978V127.997C41.5135 80.2315 80.2347 41.5103 128 41.5103ZM128 58.8071C89.7879 58.8074 58.8114 89.7847 58.8113 127.997C58.8113 166.209 89.7878 197.186 128 197.186C166.212 197.186 197.189 166.209 197.189 127.997C197.189 89.7845 166.212 58.8071 128 58.8071Z" fill="#fff"/>
+    <path d="M122.611 168.596L96.243 99.2061C95.3896 96.9605 97.5829 94.7589 99.8136 95.6219L169.236 122.48C172.093 123.585 171.306 127.85 168.245 127.85H127.952V167.604C127.952 170.687 123.705 171.475 122.611 168.596Z" fill="#fff"/>
+  </svg>
+  <path d="M304 120h32m-16-16v32" fill="none" stroke="#8b949e" stroke-width="6" stroke-linecap="round"/>
+  <!-- Nix snowflake: Simon Frankau and Tim Cuthbertson, CC BY 4.0.
+       https://github.com/NixOS/nixos-artwork/blob/master/logo/nix-snowflake-colours.svg
+       Original geometry and colors retained; resized and positioned for this lockup. -->
+  <svg x="400" y="20" width="200" height="200" viewBox="0 0 501.56251 501.56249">
+    <defs>
+      <linearGradient id="nix-light" gradientUnits="userSpaceOnUse" gradientTransform="translate(70.650339,-1055.1511)" x1="200.59668" y1="351.41116" x2="290.08701" y2="506.18814">
+        <stop offset="0" stop-color="#699ad7"/>
+        <stop offset="0.24345198" stop-color="#7eb1dd"/>
+        <stop offset="1" stop-color="#7ebae4"/>
+      </linearGradient>
+      <linearGradient id="nix-dark" gradientUnits="userSpaceOnUse" gradientTransform="translate(864.69589,-1491.3405)" x1="-584.19934" y1="782.33563" x2="-496.29703" y2="937.71399">
+        <stop offset="0" stop-color="#415e9a"/>
+        <stop offset="0.23168644" stop-color="#4a6baf"/>
+        <stop offset="1" stop-color="#5277c3"/>
+      </linearGradient>
+    </defs>
+    <g transform="translate(-156.41121,933.30685)">
+      <g transform="matrix(0.99994059,0,0,0.99994059,-0.06321798,33.188377)" fill-rule="evenodd">
+        <path id="nix-light-arm" d="m 309.54892,-710.38827 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8257 z" fill="url(#nix-light)"/>
+        <use xlink:href="#nix-light-arm" transform="rotate(60,407.11155,-715.78724)"/>
+        <use xlink:href="#nix-light-arm" transform="rotate(-60,407.31177,-715.70016)"/>
+        <use xlink:href="#nix-light-arm" transform="rotate(180,407.41868,-715.7565)"/>
+        <path id="nix-dark-arm" d="m 309.54892,-710.38827 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8256 z" fill="url(#nix-dark)"/>
+        <use xlink:href="#nix-dark-arm" transform="rotate(120,407.33916,-716.08356)"/>
+        <use xlink:href="#nix-dark-arm" transform="rotate(-120,407.28823,-715.86995)"/>
+      </g>
+    </g>
+  </svg>
+</svg>

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="Open Design + Nix" width="480" />
+</p>
+
 <h1 align="center">open-design-flake</h1>
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0 license" /></a>
@@ -106,3 +110,5 @@ aarch64-linux outputs have been evaluated, not built or run on ARM hardware.
 - Gitadel: `ssh://git@neo.netbird.cloud:2222/fractal-tess/open-design-flake.git`
 
 The package recipes adapt upstream's Apache-2.0 Nix build logic. This repository maintains its own copies. See [LICENSE](LICENSE).
+
+Logo composition: [Open Design](https://github.com/nexu-io/open-design) mark (Apache-2.0) + [Nix snowflake](https://github.com/NixOS/nixos-artwork/tree/master/logo) by Simon Frankau and Tim Cuthbertson ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)). Original marks resized and arranged for this repository.
