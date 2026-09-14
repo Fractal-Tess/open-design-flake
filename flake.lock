@@ -1,0 +1,45 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1789286504,
+        "narHash": "sha256-eiEK7cKZORNEvX0GeF3RtNEF/JXhgf2RqSp3230q13E=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ef34387ddd751e1ab8857adf4676492d32eb24ec",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "source": "source"
+      }
+    },
+    "source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784818502,
+        "narHash": "sha256-Wb+SYH6KGNO+jV8s+uvo+bHFanviP2nfCgDHB4BDdJ4=",
+        "owner": "nexu-io",
+        "repo": "open-design",
+        "rev": "276b4d8e970bc143d7ad060181a89a834e3d9caf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nexu-io",
+        "ref": "open-design-v0.16.1",
+        "repo": "open-design",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
