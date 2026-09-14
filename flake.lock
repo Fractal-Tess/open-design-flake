@@ -25,16 +25,16 @@
     "source": {
       "flake": false,
       "locked": {
-        "lastModified": 1784818502,
-        "narHash": "sha256-Wb+SYH6KGNO+jV8s+uvo+bHFanviP2nfCgDHB4BDdJ4=",
+        "lastModified": 1789384997,
+        "narHash": "sha256-hKPjNiSPAD07aqcZ7fsVUG+XO4oYYzCJLtUPdSO7GKk=",
         "owner": "nexu-io",
         "repo": "open-design",
-        "rev": "276b4d8e970bc143d7ad060181a89a834e3d9caf",
+        "rev": "d465086b2c9264c47c5d3e1cfeb8cfb2864a41d4",
         "type": "github"
       },
       "original": {
         "owner": "nexu-io",
-        "ref": "open-design-v0.16.1",
+        "ref": "main",
         "repo": "open-design",
         "type": "github"
       }

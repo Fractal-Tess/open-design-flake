@@ -15,7 +15,6 @@ let
   pname = "open-design-web";
   version = (lib.importJSON "${src}/package.json").version;
   pnpmWorkspaceFilters = map (workspacePath: "./${workspacePath}") workspacePaths;
-  dependencyBuildPaths = lib.filter (workspacePath: workspacePath != "apps/web") workspacePaths;
   pnpmDepsHash = (import ./pnpm-deps.nix).webHash;
 in
 stdenv.mkDerivation (finalAttrs: {
@@ -46,10 +45,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   buildPhase = ''
     runHook preBuild
-    for target in ${lib.escapeShellArgs dependencyBuildPaths}; do
-      pnpm -C "$target" run --if-present build
-    done
-    pnpm --filter @open-design/web run build
+    pnpm --filter '@open-design/web...' --recursive \
+      --workspace-concurrency=1 --if-present run build
     runHook postBuild
   '';
 

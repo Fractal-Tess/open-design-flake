@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     source = {
-      url = "github:nexu-io/open-design/open-design-v0.16.1";
+      url = "github:nexu-io/open-design/main";
       flake = false;
     };
   };
@@ -87,7 +87,25 @@
           nodeMajor = builtins.head (lib.splitString "." (lib.removePrefix "~" sourceMeta.engines.node));
           pnpmVersion = lib.removePrefix "pnpm@" sourceMeta.packageManager;
           pnpmMajor = builtins.head (lib.splitString "." pnpmVersion);
-          nodejs = builtins.getAttr "nodejs_${nodeMajor}" pkgs;
+          nodejsBase = builtins.getAttr "nodejs_${nodeMajor}" pkgs;
+          nodejs = nodejsBase.override {
+            nodejs-slim = (builtins.getAttr "nodejs-slim_${nodeMajor}" pkgs).overrideAttrs (old: {
+              # Node 24's ObjectWrap backport requires both fixes together.
+              # Remove these once the pinned Node includes nodejs/node#65943.
+              patches = (old.patches or [ ]) ++ lib.optionals (nodeMajor == "24") [
+                (pkgs.fetchpatch2 {
+                  name = "node24-cleanup-hook-registry.patch";
+                  url = "https://github.com/nodejs/node/commit/0ceae18f6314c9327993d5dfb429b412a8b21340.patch";
+                  hash = "sha256-M13k1kHMFI8bLU//i/c7nEMbSUvwMyXF1ktiKcoPDuI=";
+                })
+                (pkgs.fetchpatch2 {
+                  name = "node24-cleanup-hook-lifetime.patch";
+                  url = "https://github.com/nodejs/node/commit/fa73926c5f6185eeb1293226f4597f49ee15b42c.patch";
+                  hash = "sha256-fsfGtYFIM89IYlvJDePrjWzwqe1+nO6oAcxgUdRfGXw=";
+                })
+              ];
+            });
+          };
           pnpmBase = builtins.getAttr "pnpm_${pnpmMajor}" pkgs;
           pnpm_10 = pnpmBase.overrideAttrs (_old: {
             version = pnpmVersion;

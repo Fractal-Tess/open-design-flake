@@ -50,28 +50,45 @@ stdenv.mkDerivation (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
-    # better-sqlite3 has no Node 24 prebuild. Build its native binding
-    # against the headers shipped by nixpkgs rather than fetching headers.
+    # Rebuild native addons against Nix's Node headers and libraries.
+    # Registry prebuilds are not reliable on NixOS.
     export npm_config_nodedir=${nodejs}
     export npm_config_build_from_source=true
     export PATH="${nodejs}/lib/node_modules/npm/bin/node-gyp-bin:$PATH"
 
-    bsq_dir=$(find node_modules/.pnpm -mindepth 2 -maxdepth 4 \
-      -type d -path '*/better-sqlite3@*/node_modules/better-sqlite3' \
-      -print -quit)
-    if [ -z "$bsq_dir" ]; then
-      echo "ERROR: better-sqlite3 was not found after pnpm install" >&2
-      exit 1
-    fi
-    ( cd "$bsq_dir" && node-gyp rebuild --release --build-from-source )
-    if [ ! -f "$bsq_dir/build/Release/better_sqlite3.node" ]; then
-      echo "ERROR: better_sqlite3.node was not produced" >&2
-      exit 1
-    fi
-
-    for target in ${lib.escapeShellArgs workspacePaths}; do
-      pnpm -C "$target" run --if-present build
+    for native in better-sqlite3 node-pty; do
+      native_dir=$(realpath "apps/daemon/node_modules/$native")
+      ( cd "$native_dir" && node-gyp rebuild --release --build-from-source )
     done
+    (
+      cd apps/daemon
+      # Loading addons alone misses runtime regressions involving statement GC.
+      node --input-type=commonjs <<'JS'
+      const assert = require("node:assert/strict");
+      const db = new (require("better-sqlite3"))(":memory:");
+      assert.equal(db.prepare("select 42 as answer").get().answer, 42);
+      db.close();
+      let output = "";
+      const terminal = require("node-pty").spawn(
+        "${stdenv.shell}", ["-c", "printf native-pty-ok"],
+        { cwd: process.cwd(), env: process.env }
+      );
+      const deadline = setTimeout(() => {
+        terminal.kill();
+        process.exit(1);
+      }, 10000);
+      terminal.onData(data => output += data);
+      terminal.onExit(({ exitCode }) => {
+        clearTimeout(deadline);
+        assert.equal(exitCode, 0);
+        assert.match(output, /native-pty-ok/);
+        console.log("SQLite query and native PTY spawn passed");
+      });
+    JS
+    )
+
+    pnpm --filter '@open-design/daemon...' --recursive \
+      --workspace-concurrency=1 --if-present run build
     runHook postBuild
   '';
 

@@ -24,9 +24,10 @@ Add the input to your system flake:
 ```nix
 inputs.open-design-flake = {
   url = "github:Fractal-Tess/open-design-flake";
-  inputs.nixpkgs.follows = "nixpkgs";
 };
 ```
+
+Keep this input's nixpkgs pin so the package set stays reproducible. The flake backports both fixes from [nodejs/node#65943](https://github.com/nodejs/node/pull/65943) to Node 24: unpatched 24.19 and 24.20 can abort while collecting native SQLite objects. The daemon build exercises SQLite queries and a native PTY together to catch this regression. Remove the backport when the pinned Node release includes both fixes.
 
 In a system that already imports Home Manager's NixOS module and manages the named user:
 
@@ -66,18 +67,18 @@ Options are defined in [modules/common.nix](modules/common.nix), with NixOS user
 
 ## Update the source
 
-Edit the upstream tag on the `source.url` line in `flake.nix`, then run:
+`source.url` tracks upstream's `main` branch. `flake.lock` pins an exact commit, so builds do not change until you update it:
 
 ```sh
 nix flake update source
 nix flake check
 ```
 
-Commit the source pin and lock file, publish to both remotes, then run `nix flake update open-design-flake` in the consuming NixOS repository before rebuilding. Updating a locked tag does not select a newer release tag automatically.
+Commit the updated lock file, publish to both remotes, then run `nix flake update open-design-flake` in the consuming NixOS repository before rebuilding.
 
 Dependency changes can also require new hashes in `packages/pnpm-deps.nix`, or the pnpm tarball hash in `flake.nix` if upstream changes `packageManager`. These are content hashes, not separate release selections. Review upstream build changes when a bump fails; do not disable lock-file or hash checks.
 
-The initial `open-design-v0.16.1` source tag has root package version `0.15.1`. Package names derive from upstream metadata, so use the locked source revision as well as the daemon's reported version when checking an update.
+Package versions derive from upstream metadata. Check the locked source revision as well as the daemon's reported version when verifying an update.
 
 ## Build a local checkout
 
