@@ -1,11 +1,11 @@
 # Shared option definitions for the standalone Open Design modules.
 # This file contains no service configuration and deliberately has no import
 # from the upstream repository.
-{
-  lib,
-  pkgs,
-  flake,
-  defaultDataDir,
+{ lib
+, pkgs
+, flake
+, defaultDataDir
+,
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;

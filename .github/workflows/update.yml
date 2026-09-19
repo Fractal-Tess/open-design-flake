@@ -1,0 +1,55 @@
+name: Update upstream package
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-upstream
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Update and validate package
+        run: ./scripts/update.sh
+
+      - name: Commit update
+        id: commit
+        run: |
+          if git diff --quiet; then
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          version="$(nix eval --raw .#packages.x86_64-linux.default.version)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u
+          git commit -m "chore: update upstream package to ${version}"
+          git push
+          echo "updated=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize
+        run: |
+          if [ "${{ steps.commit.outputs.updated }}" = "true" ]; then
+            echo "Updated and validated package ${{ steps.commit.outputs.version }}." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The upstream package is already current." >> "$GITHUB_STEP_SUMMARY"
+          fi
+

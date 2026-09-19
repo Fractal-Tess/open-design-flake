@@ -84,14 +84,13 @@ setting to the corresponding typed option, and rename `extraEnv` to
 
 Keep this flake's nixpkgs pin. Its Node runtime includes [native-addon fixes](https://github.com/nodejs/node/pull/65943).
 
-Upstream `main` is pinned in `flake.lock`. To update this repository:
+The daily [update workflow](.github/workflows/update.yml) advances the locked upstream source, refreshes changed dependency hashes, and commits only after every package passes its flake check. Run the same process locally with:
 
 ```sh
-nix flake update source
-nix flake check
+./scripts/update.sh
 ```
 
-Update [dependency hashes](packages/pnpm-deps.nix) if needed, then commit and publish. In your NixOS repository, run `nix flake update open-design-flake` and rebuild.
+In your NixOS repository, run `nix flake update open-design-flake` and rebuild after an automated update lands.
 
 Builds, API/MCP operations, browser rendering, and restart recovery were tested on x86_64-linux. ARM outputs were evaluated only. AI generation was not verified.
 

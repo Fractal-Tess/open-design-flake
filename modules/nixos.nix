@@ -3,11 +3,10 @@
 # must provide Home Manager's NixOS module; this wrapper imports the owned Open
 # Design Home Manager module into the selected user's configuration.
 { flake }:
-{
-  config,
-  lib,
-  pkgs,
-  ...
+{ config
+, lib
+, pkgs
+, ...
 }:
 let
   cfg = config.services.open-design;

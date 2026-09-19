@@ -2,11 +2,10 @@
 # The upstream repository is a source pin for the package only; this module
 # intentionally does not import any upstream Nix files.
 { flake }:
-{
-  config,
-  lib,
-  pkgs,
-  ...
+{ config
+, lib
+, pkgs
+, ...
 }:
 let
   cfg = config.services.open-design;
