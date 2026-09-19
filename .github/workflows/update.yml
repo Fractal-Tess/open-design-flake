@@ -2,7 +2,7 @@ name: Update upstream package
 
 on:
   schedule:
-    - cron: "17 3 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -52,4 +52,3 @@ jobs:
           else
             echo "The upstream package is already current." >> "$GITHUB_STEP_SUMMARY"
           fi
-
