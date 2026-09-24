@@ -114,12 +114,12 @@
                   (pkgs.fetchpatch2 {
                     name = "node24-cleanup-hook-registry.patch";
                     url = "https://github.com/nodejs/node/commit/0ceae18f6314c9327993d5dfb429b412a8b21340.patch";
-                    hash = "sha256-M13k1kHMFI8bLU//i/c7nEMbSUvwMyXF1ktiKcoPDuI=";
+                    hash = "sha256-+ILgfpXNf8wLK3b8jyL5HznsBz9jn+yIGvkfi/SyoZE=";
                   })
                   (pkgs.fetchpatch2 {
                     name = "node24-cleanup-hook-lifetime.patch";
                     url = "https://github.com/nodejs/node/commit/fa73926c5f6185eeb1293226f4597f49ee15b42c.patch";
-                    hash = "sha256-fsfGtYFIM89IYlvJDePrjWzwqe1+nO6oAcxgUdRfGXw=";
+                    hash = "sha256-nBC8TX6QLuTACwbA3aOhBMPjvS4djyqbZFoMRZ2xBcU=";
                   })
                 ];
             });
