@@ -25,11 +25,11 @@
     "source": {
       "flake": false,
       "locked": {
-        "lastModified": 1791801362,
-        "narHash": "sha256-EA/zorDGf5XpXODEfjb1fPH2F8YExg9smkbOj6uJpyI=",
+        "lastModified": 1791892842,
+        "narHash": "sha256-wkej5bs+vXClVUeu3FSKa1kNgM+gg8OrMm0PfyTi1+E=",
         "owner": "nexu-io",
         "repo": "open-design",
-        "rev": "0bd8251c9b5c0bed4b3aef87f53f9c1eadc493c7",
+        "rev": "1343f374c63d7866f4f3ff5d48ef038eba647f1b",
         "type": "github"
       },
       "original": {
