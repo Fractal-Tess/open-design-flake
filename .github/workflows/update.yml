@@ -25,11 +25,20 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
+      - name: Cache native Nix builds
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock', 'packages/*.nix', 'flake.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ runner.arch }}-
+          gc-max-store-size-linux: 4G
       - name: Update and validate package
         run: ./scripts/update.sh
 
       - name: Validate current package even when unchanged
         run: nix flake check --print-build-logs
+
+      - name: Retain the validated application for the Nix cache
+        run: nix build .#default --print-build-logs
 
       - name: Commit update
         id: commit
