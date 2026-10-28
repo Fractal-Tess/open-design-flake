@@ -28,6 +28,9 @@ jobs:
       - name: Update and validate package
         run: ./scripts/update.sh
 
+      - name: Validate current package even when unchanged
+        run: nix flake check --print-build-logs
+
       - name: Commit update
         id: commit
         run: |

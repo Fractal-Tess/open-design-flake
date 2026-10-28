@@ -59,8 +59,7 @@ main() {
 
   printf 'Upstream source: %s -> %s\n' "$before" "$after"
   if [[ "$before" == "$after" ]]; then
-    printf 'Already up to date.\n'
-    exit 0
+    printf 'Source is unchanged; validating the pinned package.\n'
   fi
 
   validate_and_repair

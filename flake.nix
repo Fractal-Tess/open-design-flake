@@ -92,7 +92,11 @@
         ++ baseSourcePaths
       );
 
-      webSrc = filterSource (webWorkspacePaths ++ baseSourcePaths);
+      # Web TypeScript tests import the official scenario manifest at build time.
+      webSrc = filterSource (
+        [ "plugins/_official/scenarios/od-new-generation/open-design.json" ]
+        ++ webWorkspacePaths ++ baseSourcePaths
+      );
       daemonPnpmDepsSrc = filterSource (baseSourcePaths ++ workspaceManifests daemonWorkspacePaths);
       webPnpmDepsSrc = filterSource (baseSourcePaths ++ workspaceManifests webWorkspacePaths);
 
