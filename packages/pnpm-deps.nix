@@ -1,6 +1,6 @@
 {
   # Hashes for fetchPnpmDeps with pnpm 10.33.2 and the filtered workspace
   # source trees defined in flake.nix.
-  daemonHash = "sha256-FSKJTba5G3+FbMepYoU9MsNmpDCR4hMkCQfd7UWI4TI=";
-  webHash = "sha256-qoayRGTyRxdlzunMN/Feu0fCzkZRHgsK3w/EqShdhHs=";
+  daemonHash = "sha256-OOryAN2UUwXSDrIytjt7KbVyAq2Is87ENFhV0e6yxOU=";
+  webHash = "sha256-ssuQwpA8/Vw93fJO4+jP/FEKbNleh/blIBSE/Oz1vio=";
 }
